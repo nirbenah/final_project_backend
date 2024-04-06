@@ -8,12 +8,11 @@ import { API_ENDPOINTS } from './const.js';
 import mongoose from 'mongoose';
 import { loginRoute, logoutRoute, signupRoute, getUserInfoFromCookie, updatePermissionRoute, getUserNextEventRoute } from './routes.js';
 import { consumeMessage } from './rabbitmq.js'
-import { get } from 'http';
 
 
-const COMMENT_URL = "http://localhost:5000";
-const EVENT_URL = "http://localhost:6000";
-export const ORDER_URL = "http://localhost:7000";
+const COMMENT_URL = process.env.EVENT_URL || "http://localhost:5000";
+const EVENT_URL = process.env.EVENT_URL || "http://localhost:6000";
+export const ORDER_URL = process.env.ORDER_URL ||"http://localhost:7000";
 
 dotenv.config();
 
@@ -36,7 +35,7 @@ consumeMessage();
 const app = express();
 app.use(cookieParser());
 app.use(cors({
-    origin: [frontendURL, "https://adi-toledano.github.io"],
+    origin: [frontendURL, "http://localhost:5174"],
     credentials: true
 }));
 

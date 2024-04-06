@@ -1,9 +1,3 @@
-
-export const API_GATEWAY_URL = "http://localhost:4000";
-export const COMMENT_URL = "http://localhost:5000";
-export const EVENT_URL = "http://localhost:6000";
-export const ORDER_URL = "http://localhost:7000";
-
 export const GET_ORDERS_BY_USER = "/api/ordersByUserId";
 //http://localhost:7000/api/ordersByUserId?page=1&limit=2&id=10
 

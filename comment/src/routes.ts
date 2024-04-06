@@ -1,7 +1,6 @@
 
 import { Request, Response } from 'express';
 import Comment from './models/Comment.js';
-import { type } from 'os';
 import amqp from 'amqplib'
 
 

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { EVENT_URL } from "./const.js";
+import { EVENT_URL } from "./index.js";
 
 export interface APIResponse {
     status: APIStatus;

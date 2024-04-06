@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import * as dotenv from "dotenv";
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { API_GATEWAY_URL, COMMENT_URL, EVENT_URL, GET_NEXT_EVENT, ORDER_URL } from './const.js';
+import { GET_NEXT_EVENT,  } from './const.js';
 import { consumeMessage } from './rabbitmq.js';
 
 import {
@@ -29,8 +29,13 @@ import {
 dotenv.config();
 
 export const port = process.env.PORT || 7000;
+export const API_GATEWAY_URL = process.env.API_GATEWAY_URL || "http://localhost:4000";
+export const COMMENT_URL = process.env.COMMENT_URL || "http://localhost:5000";
+export const EVENT_URL = process.env.EVENT_URL || "http://localhost:6000";
+export const ORDER_URL = process.env.ORDER_URL || "http://localhost:7000";
 
-const dbURI = `mongodb+srv://nir:tMHPJOL68p3SQVGD@cluster0.vpn2j6g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+
+const dbURI = `mongodb+srv://admin:${process.env.DBPASS}@cluster0.vpn2j6g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 async function connectToDatabase() {
   try {
@@ -42,7 +47,7 @@ async function connectToDatabase() {
 }
 
 // TODO: remove * from allowedOrigins
-const allowedOrigins = [API_GATEWAY_URL, COMMENT_URL, EVENT_URL, ORDER_URL, '*'];
+const allowedOrigins = [API_GATEWAY_URL, COMMENT_URL, EVENT_URL, ORDER_URL];
 
 connectToDatabase();
 consumeMessage();
