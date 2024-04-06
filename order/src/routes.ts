@@ -36,7 +36,7 @@ const getOrdersRoute = async (req: Request, res: Response, by_what: string) => {
         } else {
           orders = await Order.find({ username: id, isPaid: true }).skip(start_index).limit(real_limit).sort({ eventStartDate: 1 });
         }
-        total = await Order.countDocuments({ username: id });
+        total = await Order.countDocuments({ username: id, isPaid: true  });
       }
     }
   } catch (e) {
