@@ -10,7 +10,7 @@ import { loginRoute, logoutRoute, signupRoute, getUserInfoFromCookie, updatePerm
 import { consumeMessage } from './rabbitmq.js'
 
 
-const COMMENT_URL = process.env.EVENT_URL || "http://localhost:5000";
+const COMMENT_URL = process.env.COMMENT_URL || "http://localhost:5000";
 const EVENT_URL = process.env.EVENT_URL || "http://localhost:6000";
 export const ORDER_URL = process.env.ORDER_URL ||"http://localhost:7000";
 
