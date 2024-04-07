@@ -30,6 +30,10 @@ export const authMiddleware = async (req, res, next) => {
             return res.status(401).json({ message: 'User not found' });
         }
         const requiredPermission = getRequiredPermission(req.originalUrl);
+        console.log('requiredPermission:', requiredPermission);
+        console.log('user.permission:', user.permission);
+        console.log('user.permission.includes(requiredPermission):', user.permission.includes(requiredPermission));
+        console.log('user:', user);
 
         if (!user.permission.includes(requiredPermission)) {
             return res.status(403).json({ message: 'Insufficient permissions' });
