@@ -241,7 +241,8 @@ export const deleteOrdersRoute = async (req: Request, res: Response) => {
   try {
     res_refund = await refund({ orderId: orderId })
   } catch (e) {
-    //TODO: decide how we want to deal with it, maybe RabbitMQ should try again and again every constant time
+    const obj = { orderId: orderId }
+    produceMessage("order-refund-queue", obj);
   }
   res.status(200).send('Order deleted');
 }

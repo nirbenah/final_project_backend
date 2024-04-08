@@ -68,17 +68,27 @@ connectToRabbitMQ();
 export async function produceMessage(queueName: string,  obj: any) {
   console.log("produceMessage was called")
   if(!channel){
+    try{
       console.log("New channel was established from produceMessage")
       connection = await amqp.connect(amqpServerUrl);
       channel = await connection.createChannel();
+    }catch (error) {
+        console.error('Error connecting to RabbitMQ:', error);
+    }
+
   }
-  channel.sendToQueue(
-    queueName,
-    Buffer.from(
-      JSON.stringify(
-        obj
+  try{
+    channel.sendToQueue(
+      queueName,
+      Buffer.from(
+        JSON.stringify(
+          obj
+        )
       )
-    )
-  );
+    );
+  }catch (error) {
+      console.error('Error publishing message:', error);
+  }
+  
 
 }

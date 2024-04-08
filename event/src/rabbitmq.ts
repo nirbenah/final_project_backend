@@ -10,47 +10,81 @@ const amqpServerUrl = process.env.AMQP_SERVER_URL
 
 
 export async function consumeMessage() {
-    console.log("consumeMessage was called")
-    connection = await amqp.connect(amqpServerUrl);
-    channel = await connection.createChannel();
-    console.log("New channel was established from connectToRabbitMQ")
-    await channel.assertQueue("event-tickets-queue");
-    await channel.assertQueue("event-comments-queue");
-    console.log('Waiting for messages...');
-    channel.consume("event-comments-queue", async (data) => {
-        console.log("Consumed from event-comments-queue");
-        const eventId_obj = JSON.parse(data.content); // = { event_id: '4' }
-        console.log(eventId_obj)
-        const eventId = eventId_obj.event_id
-        console.log(eventId)
-        const result = await incrementCommentsNumberNoReqRes(eventId)
-        channel.ack(data);
-    });
-    channel.consume("event-tickets-queue", async (data) => {
-        console.log("Consumed from event-tickets-queue");
-        const obj = JSON.parse(data.content); // = { eventID: 'XXX', ticketType: 'XXX', quantity: 'XXX' }
-        console.log("consume message", obj)
-        const result = await incrementTicketAvailability(obj);
-        channel.ack(data);
-    });
+    console.log("consumeMessage was called");
+    try{
+        connection = await amqp.connect(amqpServerUrl);
+        channel = await connection.createChannel();
+        console.log("New channel was established from connectToRabbitMQ")
+        await channel.assertQueue("event-tickets-queue");
+        await channel.assertQueue("event-comments-queue");
+        console.log('Waiting for messages...');
+    } catch (error) {
+        console.error('Error connecting to RabbitMQ:', error);
+    }
+    try{
+        channel.consume("event-comments-queue", async (data) => {
+            console.log("Consumed from event-comments-queue");
+            const eventId_obj = JSON.parse(data.content); // = { event_id: '4' }
+            console.log(eventId_obj)
+            const eventId = eventId_obj.event_id
+            console.log(eventId)
+            try{
+                await incrementCommentsNumberNoReqRes(eventId);
+                channel.ack(data);
+            }catch{
+                channel.nack(data);
+            }
+        });
+    } catch (error) {
+        console.error('Error consuming messages from RabbitMQ:', error);
+    }
+    try{
+        channel.consume("event-tickets-queue", async (data) => {
+            console.log("Consumed from event-tickets-queue");
+            const obj = JSON.parse(data.content); // = { eventID: 'XXX', ticketType: 'XXX', quantity: 'XXX' }
+            console.log("consume message", obj);
+            try{
+                await incrementTicketAvailability(obj);
+                channel.ack(data);
+            }catch(e){
+                console.error("error in incrementTicketAvailability: " + e.message);
+                if(e.message == "Server Error"){
+                    channel.nack(data);
+                }
+            }
+
+        });
+    } catch (error) {
+        console.error('Error consuming messages from RabbitMQ:', error);
+    }
+
 
 }
 
 export async function produceMessage(queueName: string, obj: any) {
     console.log("produceMessage was called")
-    if (!channel) {
-        console.log("New channel was established from produceMessage")
-        connection = await amqp.connect(amqpServerUrl);
-        channel = await connection.createChannel();
+    try{
+        if (!channel) {
+            console.log("New channel was established from produceMessage");
+            connection = await amqp.connect(amqpServerUrl);
+            channel = await connection.createChannel();
+        }
+    } catch (error) {
+        console.error('Error connecting to RabbitMQ:', error);
     }
-    channel.sendToQueue(
-        queueName,
-        Buffer.from(
-            JSON.stringify(
-                obj
+    try{
+        channel.sendToQueue(
+            queueName,
+            Buffer.from(
+                JSON.stringify(
+                    obj
+                )
             )
-        )
-    );
+        );
+    }catch (error) {
+        console.error('Error publishing message:', error);
+    }
+
 }
 
 export const incrementCommentsNumberNoReqRes = async (eventId: number) => {
@@ -60,7 +94,7 @@ export const incrementCommentsNumberNoReqRes = async (eventId: number) => {
             { $inc: { commentsNumber: 1 } }
         );
     } catch (error) {
-        throw new Error('server error');
+        throw new Error('Server Error');
     }
 };
 
@@ -77,7 +111,13 @@ const incrementTicketAvailability = async (obj: any) => {
         }
 
         // Fetch the event from the database
-        const event = await Event.findById(eventID);
+        let event;
+        try{
+            event = await Event.findById(eventID);
+
+        }catch(e){
+            throw new Error('Server Error');
+        }
 
         if (!event) {
             throw new Error('Event not found');
@@ -95,8 +135,9 @@ const incrementTicketAvailability = async (obj: any) => {
         // Perform the increment operation
         if (ticket.available < ticket.quantity) {
             // Start a database session and transaction
-            const session = await mongoose.startSession();
-            session.startTransaction();
+            try{
+                const session = await mongoose.startSession();
+                session.startTransaction();
 
             // Update the ticket availability
             await Event.updateOne(
@@ -112,6 +153,11 @@ const incrementTicketAvailability = async (obj: any) => {
             // Commit the transaction
             await session.commitTransaction();
             session.endSession();
+
+            }catch(e){
+                throw new Error('Server Error');
+            } 
+            
         } else {
             console.error("Availability is already at maximum");
             throw new Error('Availability is already at maximum');
