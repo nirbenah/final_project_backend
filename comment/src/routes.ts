@@ -56,7 +56,7 @@ export const postCommentRoute = async (req: Request, res: Response) => {
 
 
 let order, channel, connection;
-const amqpServerUrl = 'amqps://jddswdas:q7Z2M-xcXHpB_-_XKdMbWAQ2uqmUW6ay@shark.rmq.cloudamqp.com/jddswdas'
+const amqpServerUrl = process.env.AMQP_SERVER_URL
 
 async function connectToRabbitMQ() {
   connection = await amqp.connect(amqpServerUrl);

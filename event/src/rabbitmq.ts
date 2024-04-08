@@ -6,7 +6,7 @@ import Event from "./models/Event.js";
 // RabbitMQ connection and channel
 
 let channel, connection;
-const amqpServerUrl = 'amqps://jddswdas:q7Z2M-xcXHpB_-_XKdMbWAQ2uqmUW6ay@shark.rmq.cloudamqp.com/jddswdas'
+const amqpServerUrl = process.env.AMQP_SERVER_URL
 
 
 export async function consumeMessage() {
