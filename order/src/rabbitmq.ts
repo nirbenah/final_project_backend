@@ -2,6 +2,7 @@ import axios from "axios";
 import { port } from "./index.js"
 import amqp from 'amqplib'
 import Order from './models/order.js';
+import {generateAuthToken} from './authMiddleware.js'
 
 let channel, connection;
 const amqpServerUrl = 'amqps://jddswdas:q7Z2M-xcXHpB_-_XKdMbWAQ2uqmUW6ay@shark.rmq.cloudamqp.com/jddswdas'
@@ -28,7 +29,9 @@ export async function consumeMessage() {
     const obj = JSON.parse(data.content); // = { orderId: XXX}
     let res;
     try {
-      res = await axios.delete(`${port}/api/order/${obj.orderId}`, { withCredentials: true });
+      res = await axios.delete(`${port}/api/order/${obj.orderId}`, { withCredentials: true, headers: {
+        'authorization': generateAuthToken(process.env.INTERNAL_TOKEN_CODE, process.env.INTERNAL_TOKEN_KEY)} });
+
     } catch (e) {
       const status = e.response?.status;
       if (status < 500) {

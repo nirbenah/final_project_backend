@@ -6,6 +6,8 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import { consumeMessage } from "./rabbitmq.js";
+import {authMiddleware} from './authMiddleware.js'
+
 
 dotenv.config();
 const port = process.env.PORT || 6000;
@@ -36,14 +38,14 @@ app.use(cors({
   credentials: true
 }));
 
-app.get(GET_EVENT, getEvent);
-app.get(GET_EVENTS, getAllEvents);
-app.get(GET_AVAILABLE_EVENTS, getAvailableEvents);
-app.post(POST_EVENT, postEvent);
-app.put(INC_EVENT_TICKETS, incrementTicketAvailability);
-app.put(DEC_EVENT_TICKETS, decrementTicketAvailability);
-app.put(PUT_EVENT_DATES, updateEventDates);
-app.put(PUT_EVENT_COMMENTS, incrementCommentsNumber);
+app.get(GET_EVENT, authMiddleware, getEvent);
+app.get(GET_EVENTS, authMiddleware, getAllEvents);
+app.get(GET_AVAILABLE_EVENTS, authMiddleware, getAvailableEvents);
+app.post(POST_EVENT, authMiddleware, postEvent);
+app.put(INC_EVENT_TICKETS, authMiddleware, incrementTicketAvailability);
+app.put(DEC_EVENT_TICKETS, authMiddleware, decrementTicketAvailability);
+app.put(PUT_EVENT_DATES, authMiddleware, updateEventDates);
+app.put(PUT_EVENT_COMMENTS, authMiddleware, incrementCommentsNumber);
 
 
 app.listen(port, () => {

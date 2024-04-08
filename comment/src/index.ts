@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import {authMiddleware} from './authMiddleware.js'
 
 import {
     getCommentsRoute,
@@ -45,8 +46,9 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-app.get(GET_COMMENTS_WITH_PAGINATION, getCommentsRoute);
-app.post(POST_COMMENT, postCommentRoute);
+
+app.get(GET_COMMENTS_WITH_PAGINATION, authMiddleware, getCommentsRoute);
+app.post(POST_COMMENT, authMiddleware, postCommentRoute);
 
 app.listen(port, () => {
     console.log(`Server running! port ${port}`);

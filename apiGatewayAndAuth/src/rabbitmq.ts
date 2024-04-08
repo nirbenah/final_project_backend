@@ -2,6 +2,7 @@ import User from './models/User.js';
 import amqp from 'amqplib'
 import axios from "axios";
 import { ORDER_URL } from './index.js'
+import {generateAuthToken} from './index.js'
 
 let channel, connection;
 const amqpServerUrl = 'amqps://jddswdas:q7Z2M-xcXHpB_-_XKdMbWAQ2uqmUW6ay@shark.rmq.cloudamqp.com/jddswdas'
@@ -124,7 +125,8 @@ const updateUserNextEvent = async (user, eventId, eventTitle, eventStartDate) =>
 // Function to update user's next event information from order API
 const updateUserNextEventFromOrderApi = async (user) => {
     try {
-        const res = await axios.get(`${ORDER_URL}/api/order/nextEvent/${user.username}`, { withCredentials: true });
+        const res = await axios.get(`${ORDER_URL}/api/order/nextEvent/Nirke`, { withCredentials: true , headers: {
+            'authorization': generateAuthToken(process.env.INTERNAL_TOKEN_CODE, process.env.INTERNAL_TOKEN_KEY)}});
         console.log("res:");
         console.log(res);
         user.nextEventId = res.data.eventId;

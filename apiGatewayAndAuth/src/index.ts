@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from './const.js';
 import mongoose from 'mongoose';
 import { loginRoute, logoutRoute, signupRoute, getUserInfoFromCookie, updatePermissionRoute, getUserNextEventRoute } from './routes.js';
 import { consumeMessage } from './rabbitmq.js'
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 
 const COMMENT_URL = process.env.COMMENT_URL || "http://localhost:5000";
@@ -39,9 +40,16 @@ app.use(cors({
     credentials: true
 }));
 
+
+export const generateAuthToken = (code: string, key: string): string => {
+    const token = jwt.sign(code, key );
+    return token;
+};
+
 const createProxyMiddlewareWithAuth = (target) => {
     return (req, res, next) => {
         authMiddleware(req, res, () => {
+            req.headers['authorization'] = generateAuthToken(process.env.INTERNAL_TOKEN_CODE, process.env.INTERNAL_TOKEN_KEY);
             return createProxyMiddleware({
                 target: target,
                 changeOrigin: true,

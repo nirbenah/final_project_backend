@@ -6,6 +6,9 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import { GET_NEXT_EVENT,  } from './const.js';
 import { consumeMessage } from './rabbitmq.js';
+import {authMiddleware} from './authMiddleware.js'
+import {generateAuthToken} from './authMiddleware.js'
+
 
 import {
   getOrdersByEventRoute,
@@ -58,13 +61,13 @@ app.use(cors({
   credentials: true
 }));
 
-app.get(GET_ORDERS_BY_EVENT, getOrdersByEventRoute);
-app.get(GET_ORDERS_BY_USER, getOrdersByUserRoute);
-app.get(GET_NEXT_EVENT, getNextEventRoute);
-app.post(PURCHASE, purchaseRoute);
-app.post(POST_ORDER, createOrderRoute);
-app.put(UPDATE_ORDER, putOrdersRoute);
-app.delete(DELETE_ORDER, deleteOrdersRoute);
+app.get(GET_ORDERS_BY_EVENT, authMiddleware, getOrdersByEventRoute);
+app.get(GET_ORDERS_BY_USER, authMiddleware, getOrdersByUserRoute);
+app.get(GET_NEXT_EVENT, authMiddleware, getNextEventRoute);
+app.post(PURCHASE, authMiddleware, purchaseRoute);
+app.post(POST_ORDER, authMiddleware, createOrderRoute);
+app.put(UPDATE_ORDER, authMiddleware, putOrdersRoute);
+app.delete(DELETE_ORDER, authMiddleware, deleteOrdersRoute);
 
 
 app.listen(port, () => {
