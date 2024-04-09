@@ -86,7 +86,9 @@ export async function consumeMessage() {
                     updateUserNextEventFromOrderApi(user);
                 }
             }catch (e) {
+                console.error("channel.nack(data) was sent because of the error")
                 channel.nack(data);
+                return;
             }
             channel.ack(data);
         });
@@ -116,6 +118,7 @@ export async function consumeMessage() {
                     updateUserNextEventFromOrderApi(user);
                 }catch (e) {
                     channel.nack(data);
+                    return;
                 }
             }
             channel.ack(data);
@@ -167,7 +170,7 @@ const updateUserNextEvent = async (user, eventId, eventTitle, eventStartDate) =>
 // Function to update user's next event information from order API
 const updateUserNextEventFromOrderApi = async (user) => {
     try {
-        const res = await axios.get(`${ORDER_URL}/api/order/nextEvent/Nirke`, { withCredentials: true , headers: {
+        const res = await axios.get(`${ORDER_URL}/api/order/nextEvent/${user.username}`, { withCredentials: true , headers: {
             'authorization': generateAuthToken(process.env.INTERNAL_TOKEN_CODE, process.env.INTERNAL_TOKEN_KEY)}});
         console.log("res:");
         console.log(res);
