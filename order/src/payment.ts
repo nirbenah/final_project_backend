@@ -8,7 +8,7 @@ export interface PaymentPayload {
     charge: number;
 }
 
-export const processPayment = async (payload): Promise<void> => {
+export const processPayment = async (payload): Promise<Response> => {
     console.log('making payment request',payload);
     // This is does not suppose to happen because the frontend should validate the input
     if (payload.cvv < 100 || payload.cvv > 999) {
@@ -41,7 +41,7 @@ export const processPayment = async (payload): Promise<void> => {
 }
 
 
-export const refund = async (payload: any): Promise<void> => {
+export const refund = async (payload: any): Promise<Response> => {
     // Define the API endpoint URL
     const apiUrl = 'https://www.cs-wsp.net/_functions/refund';
 
@@ -53,6 +53,8 @@ export const refund = async (payload: any): Promise<void> => {
         },
         body: JSON.stringify(payload),
     });
+    console.log("refund response");
+    console.log(response);
     return response;
 
 }

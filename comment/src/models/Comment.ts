@@ -8,5 +8,8 @@ const commentSchema = new mongoose.Schema({
     content: { type: String, required: true }
 }, {id: false});
 
+commentSchema.index({event_id: 1});
+
+
 //export default mongoose.model('modelName', Schema, 'collectionNa,e');
 export default mongoose.model('Comment', commentSchema, 'comments');
