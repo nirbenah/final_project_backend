@@ -56,7 +56,7 @@ const getRequiredPermission = (url) => {
         [API_ENDPOINTS.GET_EVENT]: '',
         [API_ENDPOINTS.GET_EVENTS]: '',
         [API_ENDPOINTS.GET_AVAILABLE_EVENTS]: 'A,M,W',
-        [API_ENDPOINTS.POST_EVENT]: 'A',
+        [API_ENDPOINTS.POST_EVENT]: 'A,M',
         [API_ENDPOINTS.INC_EVENT_TICKETS]: '',
         [API_ENDPOINTS.DEC_EVENT_TICKETS]: '',
         [API_ENDPOINTS.PUT_EVENT_DATES]: 'M,A',

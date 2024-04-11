@@ -58,38 +58,3 @@ export const refund = async (payload: any): Promise<Response> => {
     return response;
 
 }
-
-
-// // Example usage:
-// const paymentPayloadExample: PaymentPayload = {
-//     cc: '374245455400126',
-//     holder: 'Nissan Ohana',
-//     cvv: 111,
-//     exp: '05/23',
-//     charge: 9
-// };
-
-
-// // Call the processPayment function with await
-// (async () => {
-//     try {
-//         await processPayment(paymentPayloadExample);
-//         console.log('Payment processing completed.');
-//     } catch (error) {
-//         console.error('Error occurred during payment processing:', error);
-//     }
-// })();
-
-// const refundPayload = {
-//     "orderId": "123456789"
-// };
-
-// (async () => {
-//     try {
-//         const res = await refund(refundPayload);
-//         // console.log(res)
-//         console.log('Refund processing completed.');
-//     } catch (error) {
-//         console.error('Error occurred during Refund processing:', error);
-//     }
-// })();

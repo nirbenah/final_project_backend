@@ -145,7 +145,7 @@ export const purchaseRoute = async (req: Request, res: Response) => {
       // delete order - rabbit
       const obj = { orderId: order._id }
       produceMessage("order-delete-queue", obj);
-      res.status(500).send("Internal server error");
+      res.status(400).send("Tickets are not available anymore");
       return;
     }
     try {
@@ -274,7 +274,7 @@ export const getNextEventRoute = async (req: Request, res: Response) => {
 const makePayment = async (orderId: mongoose.Types.ObjectId, payload: PaymentPayload, res: Response, order: any) => {
   let tries = 0;
   let works = false;
-  while(tries < 10 && !works){
+  while(tries < 3 && !works){
     const response = await processPayment(payload);
     console.log("response.status " + response.status )
     if (response.status != 200){
