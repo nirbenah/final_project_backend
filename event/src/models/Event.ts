@@ -55,12 +55,6 @@ export const eventJoiSchema = Joi.object({
     image: Joi.string().allow(''),
     commentsNumber: Joi.number().default(0),
 })
-    .custom((value, helpers) => {
-        if (value.end_date && value.start_date && value.end_date <= value.start_date) {
-            return helpers.error('"end_date" must be greater than "start_date".');
-        }
-        return value;
-    })
     .options({ abortEarly: false, allowUnknown: true });
 
 export default mongoose.model('Event', eventSchema);

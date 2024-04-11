@@ -81,6 +81,10 @@ export const postEvent = async (req: Request, res: Response) => {
             handleError(res, 400, eventJoiSchema.validate(eventData).error.message);
             return;
         }
+        if(eventData.start_date >= eventData.end_date){
+            handleError(res, 400, "End date must be greater than start date");
+            return;
+        }
         else {
             event = new Event(eventData);
 
@@ -239,6 +243,7 @@ const updateTicketsMinPrice = async (eventId: ObjectId) => {
         }
     });
     try {
+        min_ticket_price = min_ticket_price === Number.MAX_VALUE ? 0 : min_ticket_price;
         await Event.updateOne(
             { _id: event.id },
             { min_price: min_ticket_price }
