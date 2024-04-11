@@ -53,20 +53,12 @@ export async function consumeMessage() {
         console.error("internal server error in order-delete-queue. retries till the server works");
         channel.nack(data);
       }
-      const order_eventID = order.eventID;
-      const order_ticketType = order.ticketType;
-      const order_quantity = order.quantity;
       try {
         await order.deleteOne();
       } catch (error) {
         console.error("internal server error in order-delete-queue. retries till the server works");
         channel.nack(data);
       }
-      const event_obj = { eventID: order_eventID, ticketType: order_ticketType, quantity: order_quantity }
-      produceMessage("event-tickets-queue", event_obj)
-      //next Event update:
-      const objToNextEvent = { username: order.username, eventId: order.eventID };
-      produceMessage("user-nextEvent-delete-queue", objToNextEvent);
       channel.ack(data);
     });
   } catch (error) {
