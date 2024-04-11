@@ -2,6 +2,7 @@ import amqp from 'amqplib';
 import mongoose from 'mongoose';
 import Event from "./models/Event.js";
 import * as dotenv from "dotenv";
+import { updateTicketsMinPrice } from './routes.js';
 
 
 // RabbitMQ connection and channel
@@ -164,7 +165,7 @@ const incrementTicketAvailability = async (obj: any) => {
             console.error("Availability is already at maximum");
             throw new Error('Availability is already at maximum');
         }
-
+        updateTicketsMinPrice(event.id);
         // Return the event ID as output
         return event.id;
     } catch (error) {

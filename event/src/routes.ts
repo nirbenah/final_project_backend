@@ -230,8 +230,8 @@ export const decrementTicketAvailability = async (req: Request, res: Response) =
     sendJsonResponse(res, 200, { _id: event.id });
 };
 
-// Function to update event's tickets information
-const updateTicketsMinPrice = async (eventId: ObjectId) => {
+// Update event's tickets information
+export const updateTicketsMinPrice = async (eventId: ObjectId) => {
     const event = await Event.findById(eventId);
     let min_ticket_price = Number.MAX_VALUE;
     event.tickets.forEach((ticket) => {
