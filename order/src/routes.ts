@@ -1,11 +1,10 @@
 
-import { Request, Response, response } from 'express';
+import { Request, Response } from 'express';
 import Order from './models/order.js';
-import mongoose, { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 import { servicesApi } from './servicesAPI.js';
-import { refund, processPayment, PaymentPayload } from './payment.js'
+import { processPayment, PaymentPayload } from './payment.js'
 import { produceMessage } from './rabbitmq.js';
-import { timeStamp } from 'console';
 
 interface EventInfo {
   eventId: string;

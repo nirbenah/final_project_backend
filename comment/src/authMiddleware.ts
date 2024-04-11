@@ -21,10 +21,10 @@ export const verifyToken = (token)  => {
         const tokenData = verifyToken(auth);
         //console.log("tokenData", tokenData)
         if(tokenData != process.env.INTERNAL_TOKEN_CODE){
-            throw new Error('problem in authorization process');
+            return res.status(401).send("Unauthorized: Token is not valid");
         }
         next();
     } else {
-        throw new Error('No token');
+        return res.status(401).send("Unauthorized: No token provided");
     }
   };
