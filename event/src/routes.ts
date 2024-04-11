@@ -166,10 +166,7 @@ export const incrementTicketAvailability = async (req: Request, res: Response) =
         handleError(res, 400, "Availability is already at maximum");
         return;
     }
-    if (event.min_price > ticket.price) {
-        updateTicketsMinPrice(event.id);
-    }
-
+    updateTicketsMinPrice(event.id);
     sendJsonResponse(res, 200, { _id: event.id });
 };
 
@@ -229,9 +226,7 @@ export const decrementTicketAvailability = async (req: Request, res: Response) =
         handleError(res, 400, "Availability is already at minimum");
         return;
     }
-    if (event.min_price === ticket.price) {
-        updateTicketsMinPrice(event.id);
-    }
+    updateTicketsMinPrice(event.id);
     sendJsonResponse(res, 200, { _id: event.id });
 };
 

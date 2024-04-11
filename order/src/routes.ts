@@ -24,18 +24,18 @@ const getOrdersRoute = async (req: Request, res: Response, by_what: string) => {
     if (id) {
       if (by_what == "Event") {
         if (!limit) {
-          orders = await Order.find({ eventID: id, isPaid: true }).sort({ eventStartDate: 1 });
+          orders = await Order.find({ eventID: id, isPaid: true }).sort({ orderDate: 1 });
         } else {
-          orders = await Order.find({ eventID: id, isPaid: true }).skip(start_index).limit(real_limit).sort({ eventStartDate: 1 });
+          orders = await Order.find({ eventID: id, isPaid: true }).skip(start_index).limit(real_limit).sort({ orderDate: 1 });
         }
         total = await Order.countDocuments({ eventID: id });
       }
       else if (by_what == "User") {
         console.log("get orders by user", id)
         if (!limit) {
-          orders = await Order.find({ username: id, isPaid: true }).sort({ eventStartDate: 1 });
+          orders = await Order.find({ username: id, isPaid: true }).sort({ orderDate: 1 });
         } else {
-          orders = await Order.find({ username: id, isPaid: true }).skip(start_index).limit(real_limit).sort({ eventStartDate: 1 });
+          orders = await Order.find({ username: id, isPaid: true }).skip(start_index).limit(real_limit).sort({ orderDate: 1 });
         }
         total = await Order.countDocuments({ username: id, isPaid: true  });
       }
