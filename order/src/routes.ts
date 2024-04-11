@@ -209,7 +209,11 @@ export const deleteOrdersRoute = async (req: Request, res: Response) => {
     res.status(500).send('internal server error');
     return;
   }
-
+  if(order.eventStartDate < new Date()){
+    res.status(400).send('Cannot delete order after event start date');
+    return;
+  }
+  
   const order_eventID = order.eventID;
   const order_ticketType = order.ticketType;
   const order_quantity = order.quantity;
