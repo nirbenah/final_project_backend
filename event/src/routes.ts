@@ -166,6 +166,9 @@ export const incrementTicketAvailability = async (req: Request, res: Response) =
         handleError(res, 400, "Availability is already at maximum");
         return;
     }
+    if (event.min_price > ticket.price) {
+        updateTicketsMinPrice(event.id);
+    }
 
     sendJsonResponse(res, 200, { _id: event.id });
 };
@@ -235,7 +238,6 @@ export const decrementTicketAvailability = async (req: Request, res: Response) =
 // Function to update event's tickets information
 const updateTicketsMinPrice = async (eventId: ObjectId) => {
     const event = await Event.findById(eventId);
-    // TODO: if none of the tickets are available, what is the min_price? 
     let min_ticket_price = Number.MAX_VALUE;
     event.tickets.forEach((ticket) => {
         if (ticket.available !== 0 && ticket.price < min_ticket_price) {
@@ -243,7 +245,6 @@ const updateTicketsMinPrice = async (eventId: ObjectId) => {
         }
     });
     try {
-        min_ticket_price = min_ticket_price === Number.MAX_VALUE ? 0 : min_ticket_price;
         await Event.updateOne(
             { _id: event.id },
             { min_price: min_ticket_price }
