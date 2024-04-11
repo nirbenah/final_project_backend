@@ -146,7 +146,7 @@ export const incrementTicketAvailability = async (req: Request, res: Response) =
                     _id: eventId,
                     $and: [
                         { [`tickets.${ticketIndex}.available`]: { $gt: 0 } },
-                        { tickets_available: { $gt: 0 } }
+                        { tickets_available: { $lt: "$quantity" } }
                     ]
                 },
                 { $inc: { [`tickets.${ticketIndex}.available`]: quantityToIncrement, tickets_available: quantityToIncrement } },
@@ -208,8 +208,8 @@ export const decrementTicketAvailability = async (req: Request, res: Response) =
                 {
                     _id: eventId,
                     $and: [
-                        { [`tickets.${ticketIndex}.available`]: { $gt: 0 } },
-                        { tickets_available: { $gt: 0 } }
+                        { [`tickets.${ticketIndex}.available`]: { $gte: ticketInfo.quantity } },
+                        { tickets_available: { $gte: ticketInfo.quantity } }
                     ]
                 },
                 { $inc: { [`tickets.${ticketIndex}.available`]: quantityToDecrement, tickets_available: quantityToDecrement } },
