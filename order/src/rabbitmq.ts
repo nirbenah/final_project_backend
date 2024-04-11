@@ -38,45 +38,99 @@ export async function consumeMessage() {
   } catch (error) {
         console.error('Error consuming messages from RabbitMQ:', error);
   }
-
   try{
     channel.consume("order-delete-queue", async (data) => {
       console.log("Consumed from order-delete-queue");
       const obj = JSON.parse(data.content); // = { orderId: XXX}
-      let res;
+      const orderId = obj.orderId;
+      let order;
       try {
-        res = await axios.delete(`${port}/api/order/${obj.orderId}`, { withCredentials: true, headers: {
-          'authorization': generateAuthToken(process.env.INTERNAL_TOKEN_CODE, process.env.INTERNAL_TOKEN_KEY)} });
-  
-      } catch (e) {
-        const status = e.response?.status;
-        if (status < 500) {
-          console.error("invalid id / id not exist");
-          return;
-        } else if (status == 500) {
-          console.error("server error. Retries");
-          channel.nack(data);
+        order = await Order.findById(orderId);
+        if (!order) {
+          console.error('Order not found in order-delete-queue');
           return;
         }
+      } catch (error) {
+        console.error("internal server error in order-delete-queue. retries till the server works");
+        channel.nack(data);
       }
+      const order_eventID = order.eventID;
+      const order_ticketType = order.ticketType;
+      const order_quantity = order.quantity;
+      try {
+        await order.deleteOne();
+      } catch (error) {
+        console.error("internal server error in order-delete-queue. retries till the server works");
+        channel.nack(data);
+      }
+      const event_obj = { eventID: order_eventID, ticketType: order_ticketType, quantity: order_quantity }
+      produceMessage("event-tickets-queue", event_obj)
+      //next Event update:
+      const objToNextEvent = { username: order.username, eventId: order.eventID };
+      produceMessage("user-nextEvent-delete-queue", objToNextEvent);
       channel.ack(data);
     });
   } catch (error) {
         console.error('Error consuming messages from RabbitMQ:', error);
   }
+  // try{
+  //   channel.consume("order-delete-queue", async (data) => {
+  //     console.log("Consumed from order-delete-queue");
+  //     const obj = JSON.parse(data.content); // = { orderId: XXX}
+  //     let res;
+  //     try {
+  //       res = await axios.delete(`${port}/api/order/${obj.orderId}`, { withCredentials: true, headers: {
+  //         'authorization': generateAuthToken(process.env.INTERNAL_TOKEN_CODE, process.env.INTERNAL_TOKEN_KEY)} });
+  
+  //     } catch (e) {
+  //       const status = e.response?.status;
+  //       if (status < 500) {
+  //         console.error("invalid id / id not exist");
+  //         return;
+  //       } else if (status == 500) {
+  //         console.error("server error. Retries");
+  //         channel.nack(data);
+  //         return;
+  //       }
+  //     }
+  //     channel.ack(data);
+  //   });
+  // } catch (error) {
+  //       console.error('Error consuming messages from RabbitMQ:', error);
+  // }
 
   try{
     channel.consume("order-refund-queue", async (data) => {
       console.log("Consumed from order-refund-queue");
-      try{
+      // try{
         const obj = JSON.parse(data.content);
         const orderId = obj.orderId;
-        await refund({ orderId: orderId });
-        channel.ack(data);
-      }catch(e){
-        console.error("error in refund, continue to retry with RabbitMQ");
-        channel.nack(data);
-      }
+        let tries = 0;
+        let works = false;
+        while(tries < 10 && !works){
+          const response = await refund({ orderId: orderId });
+          //console.log("response.status " + response.status )
+          if (response.status != 200){
+            //console.error("!response.ok");
+            tries++;
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds before sending the next request
+            //throw new Error(response.statusText);
+          }
+          else{
+            works = true;
+          }
+        }
+        if(!works){
+          console.error("Problem in refund, 10 different tries");
+        }
+        else{
+          channel.ack(data);
+        }
+
+      // }catch(e){
+      //   console.error("error in refund, continue to retry with RabbitMQ");
+      //   channel.nack(data);
+      // }
     });
   } catch (error) {
         console.error('Error consuming messages from RabbitMQ:', error);

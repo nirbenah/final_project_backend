@@ -15,5 +15,7 @@ const orderSchema = new mongoose.Schema({
     isTimedOut: {type: Boolean, required: true},
 }, {id: false});
 
+orderSchema.index({ username: 1, eventID: 1, orderDate: -1 });
+
 //export default mongoose.model('modelName', Schema, 'collectionName');
 export default mongoose.model('Order', orderSchema, 'orders');

@@ -24,6 +24,9 @@ const eventSchema = new mongoose.Schema({
     commentsNumber: { type: Number, default: 0 }
 });
 
+eventSchema.index({ start_date: -1});
+
+
 export const eventJoiSchema = Joi.object({
     title: Joi.string().required(),
     category: Joi.string().valid(...CATEGORY_TYPES).required(),

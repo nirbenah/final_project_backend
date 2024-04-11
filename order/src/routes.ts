@@ -1,5 +1,5 @@
 
-import { Request, Response } from 'express';
+import { Request, Response, response } from 'express';
 import Order from './models/order.js';
 import mongoose, { ObjectId } from 'mongoose';
 import { servicesApi } from './servicesAPI.js';
@@ -52,6 +52,7 @@ export const getOrdersByEventRoute = async (req: Request, res: Response) => {
 }
 
 export const getOrdersByUserRoute = async (req: Request, res: Response) => {
+  console.log("getOrdersByUserRoute was called")
   getOrdersRoute(req, res, "User")
 }
 
@@ -237,13 +238,8 @@ export const deleteOrdersRoute = async (req: Request, res: Response) => {
   const objToNextEvent = { username: order.username, eventId: order.eventID };
   produceMessage("user-nextEvent-delete-queue", objToNextEvent);
   // TODO: refund money:
-  let res_refund;
-  try {
-    res_refund = await refund({ orderId: orderId })
-  } catch (e) {
-    const obj = { orderId: orderId }
-    produceMessage("order-refund-queue", obj);
-  }
+  produceMessage("order-refund-queue", obj);
+  
   res.status(200).send('Order deleted');
 }
 
@@ -289,11 +285,23 @@ export const getNextEventRoute = async (req: Request, res: Response) => {
 // Utility functions
 
 const makePayment = async (orderId: mongoose.Types.ObjectId, payload: PaymentPayload, res: Response, order: any) => {
-  try {
-    await processPayment(payload);
+  let tries = 0;
+  let works = false;
+  while(tries < 10 && !works){
+    const response = await processPayment(payload);
+    console.log("response.status " + response.status )
+    if (response.status != 200){
+      console.error("!response.ok");
+      tries++;
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds before sending the next request
+      //throw new Error(response.statusText);
+    }
+    else{
+      works = true;
+    }
   }
-  catch (e) {
-    console.error('Error making payment:', e);
+  if(!works){
+    console.error('Error making payment, error ');
     res.status(500).send('Error making payment');
     // delete order - rabbit: V
     const objorderId = { orderId: order._id }
@@ -303,7 +311,6 @@ const makePayment = async (orderId: mongoose.Types.ObjectId, payload: PaymentPay
     produceMessage("event-tickets-queue", obj);
     return;
   }
-
   res.status(200).send('Payment successful');
 
   // TODO: put order {isPaid = true} - rabbit 
@@ -317,7 +324,6 @@ const makePayment = async (orderId: mongoose.Types.ObjectId, payload: PaymentPay
     console.error('Error updating order to paid:', error);
     res.status(500).send('Error updating order to paid');
   }
-
 
   // update next event for user
   try {
