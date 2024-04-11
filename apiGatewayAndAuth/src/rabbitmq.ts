@@ -2,13 +2,15 @@ import User from './models/User.js';
 import amqp from 'amqplib'
 import axios from "axios";
 import { ORDER_URL } from './index.js'
-import {generateAuthToken} from './index.js'
+import { generateAuthToken } from './index.js'
+import * as dotenv from "dotenv";
 
 let channel, connection;
+dotenv.config();
 const amqpServerUrl = process.env.AMQP_SERVER_URL
 
 export async function consumeMessage() {
-    try{
+    try {
         connection = await amqp.connect(amqpServerUrl);
         channel = await connection.createChannel();
         await channel.assertQueue("user-nextEvent-post-queue");
@@ -19,7 +21,7 @@ export async function consumeMessage() {
         console.error('Error connecting to RabbitMQ:', error);
     }
 
-    try{
+    try {
         channel.consume("user-nextEvent-post-queue", async (data) => {
             console.log("Consumed from user-nextEvent-post-queue");
             const obj = JSON.parse(data.content); // = { username: XXX, eventId: XXX, eventTitle: XXX, eventStartDate: XXX }
@@ -27,7 +29,6 @@ export async function consumeMessage() {
             const eventId = obj.eventId;
             const eventTitle = obj.eventTitle;
             const eventStartDate = obj.eventStartDate;
-            // console.log(obj)
             let users;
             try {
                 users = await User.find({ username: username });
@@ -39,10 +40,10 @@ export async function consumeMessage() {
             const user = users[0];
             const now = new Date();
             if (!user.nextEventId || (new Date(eventStartDate).getTime() < new Date(user.nextEventDate).getTime() && now.getTime() < new Date(eventStartDate).getTime())) {
-                try{
+                try {
                     updateUserNextEvent(user, eventId, eventTitle, eventStartDate);
                     channel.ack(data);
-                }catch (e) {
+                } catch (e) {
                     channel.nack(data);
                 }
             }
@@ -52,7 +53,7 @@ export async function consumeMessage() {
     }
 
 
-    try{
+    try {
         channel.consume("user-nextEvent-put-queue", async (data) => {
             console.log("Consumed from user-nextEvent-put-queue");
             const obj = JSON.parse(data.content); // = { username: XXX, eventId: XXX, eventTitle: XXX, eventStartDate: XXX }
@@ -62,7 +63,7 @@ export async function consumeMessage() {
             const eventTitle = obj.eventTitle
             console.log(obj)
             let users;
-    
+
             try {
                 users = await User.find({ username: username });
             } catch (e) {
@@ -72,9 +73,9 @@ export async function consumeMessage() {
             }
             const user = users[0];
             const now = new Date()
-            try{
+            try {
                 // if user has no next event or next event date has passed
-                if(!eventId || !eventStartDate || !eventTitle) {
+                if (!eventId || !eventStartDate || !eventTitle) {
                     updateUserNextEventFromOrderApi(user);
                 }
                 // user purchase new ticket that starts earlier 
@@ -85,7 +86,7 @@ export async function consumeMessage() {
                 else if (eventId == user.nextEventId) {
                     updateUserNextEventFromOrderApi(user);
                 }
-            }catch (e) {
+            } catch (e) {
                 console.error("channel.nack(data) was sent because of the error")
                 channel.nack(data);
                 return;
@@ -97,7 +98,7 @@ export async function consumeMessage() {
     }
 
 
-    try{
+    try {
         channel.consume("user-nextEvent-delete-queue", async (data) => {
             console.log("Consumed from user-nextEvent-delete-queue");
             const obj = JSON.parse(data.content); // = { username: XXX, eventId: XXX}
@@ -114,9 +115,9 @@ export async function consumeMessage() {
             }
             const user = users[0];
             if (user.nextEventId == eventId) {
-                try{
+                try {
                     updateUserNextEventFromOrderApi(user);
-                }catch (e) {
+                } catch (e) {
                     channel.nack(data);
                     return;
                 }
@@ -126,34 +127,34 @@ export async function consumeMessage() {
     } catch (error) {
         console.error('Error consuming messages from RabbitMQ:', error);
     }
-    
+
 }
 
 export async function produceMessage(queueName: string, obj: any) {
     console.log("produceMessage was called")
     if (!channel) {
-      console.log("New channel was established from produceMessage")
-      try{
-        connection = await amqp.connect(amqpServerUrl);
-        channel = await connection.createChannel();
-      } catch (error) {
-        console.error('Error connecting to RabbitMQ:', error);
+        console.log("New channel was established from produceMessage")
+        try {
+            connection = await amqp.connect(amqpServerUrl);
+            channel = await connection.createChannel();
+        } catch (error) {
+            console.error('Error connecting to RabbitMQ:', error);
+        }
     }
-    }
-    try{
+    try {
         channel.sendToQueue(
             queueName,
             Buffer.from(
-              JSON.stringify(
-                obj
-              )
+                JSON.stringify(
+                    obj
+                )
             )
         );
-    }catch (error) {
+    } catch (error) {
         console.error('Error publishing message:', error);
     }
-    
-  }
+
+}
 
 const updateUserNextEvent = async (user, eventId, eventTitle, eventStartDate) => {
     user.nextEventId = eventId;
@@ -170,8 +171,11 @@ const updateUserNextEvent = async (user, eventId, eventTitle, eventStartDate) =>
 // Function to update user's next event information from order API
 const updateUserNextEventFromOrderApi = async (user) => {
     try {
-        const res = await axios.get(`${ORDER_URL}/api/order/nextEvent/${user.username}`, { withCredentials: true , headers: {
-            'authorization': generateAuthToken(process.env.INTERNAL_TOKEN_CODE, process.env.INTERNAL_TOKEN_KEY)}});
+        const res = await axios.get(`${ORDER_URL}/api/order/nextEvent/${user.username}`, {
+            withCredentials: true, headers: {
+                'authorization': generateAuthToken(process.env.INTERNAL_TOKEN_CODE, process.env.INTERNAL_TOKEN_KEY)
+            }
+        });
         console.log("res:");
         console.log(res);
         user.nextEventId = res.data.eventId;

@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import Comment from './models/Comment.js';
 import amqp from 'amqplib'
+import { ampqServerUrl } from './index.js';
 
 
 export const getCommentsRoute = async (req: Request, res: Response) => {
@@ -57,12 +58,6 @@ export const postCommentRoute = async (req: Request, res: Response) => {
 
 let order, channel, connection;
 const amqpServerUrl = process.env.AMQP_SERVER_URL
-
-async function connectToRabbitMQ() {
-  connection = await amqp.connect(amqpServerUrl);
-  channel = await connection.createChannel();
-}
-connectToRabbitMQ();
 
 
 export async function produceMessage(queueName: string,  obj: any) {

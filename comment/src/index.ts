@@ -22,6 +22,7 @@ export const API_GATEWAY_URL = process.env.API_GATEWAY_URL || "http://localhost:
 export const COMMENT_URL = process.env.COMMENT_URL || "http://localhost:5000";
 export const EVENT_URL = process.env.EVENT_URL || "http://localhost:6000";
 export const ORDER_URL = process.env.ORDER_URL || "http://localhost:7000";
+export const ampqServerUrl = process.env.AMQP_SERVER_URL;
 
 const dbURI = `mongodb+srv://admin:${process.env.DBPASS}@cluster0.vpn2j6g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -37,6 +38,7 @@ async function connectToDatabase() {
 const allowedOrigins = [API_GATEWAY_URL, COMMENT_URL, EVENT_URL, ORDER_URL];
 
 connectToDatabase();
+
 const app = express();
 app.use(cors({
   origin: allowedOrigins,

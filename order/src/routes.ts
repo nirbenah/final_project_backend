@@ -5,6 +5,7 @@ import mongoose, { ObjectId } from 'mongoose';
 import { servicesApi } from './servicesAPI.js';
 import { refund, processPayment, PaymentPayload } from './payment.js'
 import { produceMessage } from './rabbitmq.js';
+import { timeStamp } from 'console';
 
 interface EventInfo {
   eventId: string;
@@ -94,7 +95,7 @@ export const createOrderRoute = async (req: Request, res: Response) => {
     return;
   }
   console.log("order created", order._id, "and tickets saved")
-  res.status(201).json({ orderId: order._id });
+  res.status(201).json({ orderId: order._id, timeStamp: new Date()});
 
   initiateTimedCheckout(order._id, order.eventID, order.ticketType, order.quantity);
 }
@@ -141,13 +142,12 @@ export const purchaseRoute = async (req: Request, res: Response) => {
     console.log("Trying to acquire tickets again");
     const eventRes = await servicesApi.decrementTicketsAvailability(order.eventID, order.ticketType, order.quantity);
     if (eventRes.error) {
-      // delete order - rabbit: V
+      // delete order - rabbit
       const obj = { orderId: order._id }
       produceMessage("order-delete-queue", obj);
       res.status(500).send("Internal server error");
       return;
     }
-    // TODO: put order {isStarted = true} - rabbit
     try {
       updatedOrder = await Order.findOneAndUpdate(
         { _id: orderId },
@@ -211,17 +211,6 @@ export const deleteOrdersRoute = async (req: Request, res: Response) => {
     return;
   }
 
-  // const eventRes = await servicesApi.getEvent(order.eventID);
-  // if (eventRes.error) {
-  //   res.status(500).send("Internal server error");
-  //   return;
-  // }
-  // const event = eventRes.data;
-
-  // if (event.start_date < new Date()) {
-  //   return res.status(400).send('Cannot delete order for an event that has already happened');
-  // }
-
   const order_eventID = order.eventID;
   const order_ticketType = order.ticketType;
   const order_quantity = order.quantity;
@@ -231,13 +220,13 @@ export const deleteOrdersRoute = async (req: Request, res: Response) => {
     console.error(error);
     res.status(500).send('Internal server error');
   }
-  // TODO: increment tickets number in event using Rabbit MQ: V
+  // increment tickets number in event using Rabbit MQ
   const obj = { eventID: order_eventID, ticketType: order_ticketType, quantity: order_quantity }
   produceMessage("event-tickets-queue", obj)
   //next Event update:
   const objToNextEvent = { username: order.username, eventId: order.eventID };
   produceMessage("user-nextEvent-delete-queue", objToNextEvent);
-  // TODO: refund money:
+  // refund money
   produceMessage("order-refund-queue", obj);
   
   res.status(200).send('Order deleted');
@@ -248,7 +237,6 @@ export const getNextEventRoute = async (req: Request, res: Response) => {
   console.log("getNextEventRoute")
   const username = req.params.id;
   const orders = await Order.find({ username: username });
-  // console.log(orders)
   const now = new Date();
   if (orders.length == 0) {
     res.status(200).send("");
@@ -260,7 +248,6 @@ export const getNextEventRoute = async (req: Request, res: Response) => {
   orders.forEach((order) => {
     if (order.isPaid) {
       const OrderEventStartDate = order.eventStartDate
-      // console.log(OrderEventStartDate)
       if (nextEventDate) {
         if (OrderEventStartDate < nextEventDate && now < OrderEventStartDate) {
           nextEventTitle = order.eventTitle
@@ -294,7 +281,6 @@ const makePayment = async (orderId: mongoose.Types.ObjectId, payload: PaymentPay
       console.error("!response.ok");
       tries++;
       await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for 5 seconds before sending the next request
-      //throw new Error(response.statusText);
     }
     else{
       works = true;
@@ -303,7 +289,7 @@ const makePayment = async (orderId: mongoose.Types.ObjectId, payload: PaymentPay
   if(!works){
     console.error('Error making payment, error ');
     res.status(500).send('Error making payment');
-    // delete order - rabbit: V
+    // delete order - rabbit
     const objorderId = { orderId: order._id }
     produceMessage("order-delete-queue", objorderId);
     // increment tickets using rabbit
@@ -313,7 +299,6 @@ const makePayment = async (orderId: mongoose.Types.ObjectId, payload: PaymentPay
   }
   res.status(200).send('Payment successful');
 
-  // TODO: put order {isPaid = true} - rabbit 
   try {
     await Order.findOneAndUpdate(
       { _id: orderId },

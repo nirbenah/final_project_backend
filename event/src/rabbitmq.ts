@@ -1,17 +1,19 @@
 import amqp from 'amqplib';
 import mongoose from 'mongoose';
 import Event from "./models/Event.js";
+import * as dotenv from "dotenv";
 
 
 // RabbitMQ connection and channel
 
 let channel, connection;
+dotenv.config();
 const amqpServerUrl = process.env.AMQP_SERVER_URL
 
 
 export async function consumeMessage() {
     console.log("consumeMessage was called");
-    try{
+    try {
         connection = await amqp.connect(amqpServerUrl);
         channel = await connection.createChannel();
         console.log("New channel was established from connectToRabbitMQ")
@@ -21,34 +23,34 @@ export async function consumeMessage() {
     } catch (error) {
         console.error('Error connecting to RabbitMQ:', error);
     }
-    try{
+    try {
         channel.consume("event-comments-queue", async (data) => {
             console.log("Consumed from event-comments-queue");
             const eventId_obj = JSON.parse(data.content); // = { event_id: '4' }
             console.log(eventId_obj)
             const eventId = eventId_obj.event_id
             console.log(eventId)
-            try{
+            try {
                 await incrementCommentsNumberNoReqRes(eventId);
                 channel.ack(data);
-            }catch{
+            } catch {
                 channel.nack(data);
             }
         });
     } catch (error) {
         console.error('Error consuming messages from RabbitMQ:', error);
     }
-    try{
+    try {
         channel.consume("event-tickets-queue", async (data) => {
             console.log("Consumed from event-tickets-queue");
             const obj = JSON.parse(data.content); // = { eventID: 'XXX', ticketType: 'XXX', quantity: 'XXX' }
             console.log("consume message", obj);
-            try{
+            try {
                 await incrementTicketAvailability(obj);
                 channel.ack(data);
-            }catch(e){
+            } catch (e) {
                 console.error("error in incrementTicketAvailability: " + e.message);
-                if(e.message == "Server Error"){
+                if (e.message == "Server Error") {
                     channel.nack(data);
                 }
             }
@@ -63,7 +65,7 @@ export async function consumeMessage() {
 
 export async function produceMessage(queueName: string, obj: any) {
     console.log("produceMessage was called")
-    try{
+    try {
         if (!channel) {
             console.log("New channel was established from produceMessage");
             connection = await amqp.connect(amqpServerUrl);
@@ -72,7 +74,7 @@ export async function produceMessage(queueName: string, obj: any) {
     } catch (error) {
         console.error('Error connecting to RabbitMQ:', error);
     }
-    try{
+    try {
         channel.sendToQueue(
             queueName,
             Buffer.from(
@@ -81,7 +83,7 @@ export async function produceMessage(queueName: string, obj: any) {
                 )
             )
         );
-    }catch (error) {
+    } catch (error) {
         console.error('Error publishing message:', error);
     }
 
@@ -112,10 +114,10 @@ const incrementTicketAvailability = async (obj: any) => {
 
         // Fetch the event from the database
         let event;
-        try{
+        try {
             event = await Event.findById(eventID);
 
-        }catch(e){
+        } catch (e) {
             throw new Error('Server Error');
         }
 
@@ -135,29 +137,29 @@ const incrementTicketAvailability = async (obj: any) => {
         // Perform the increment operation
         if (ticket.available < ticket.quantity) {
             // Start a database session and transaction
-            try{
+            try {
                 const session = await mongoose.startSession();
                 session.startTransaction();
 
-            // Update the ticket availability
-            await Event.updateOne(
-                {
-                    _id: eventID,
-                    [`tickets.${ticketIndex}.available`]: { $gte: 0 },
-                    tickets_available: { $gte: 0 }
-                },
-                { $inc: { [`tickets.${ticketIndex}.available`]: quantityToIncrement, tickets_available: quantityToIncrement } },
-                { session }
-            );  // I changed here from gt to gte, because with gt if someone checkedout with all the tickets of a category it did not increment
+                // Update the ticket availability
+                await Event.updateOne(
+                    {
+                        _id: eventID,
+                        [`tickets.${ticketIndex}.available`]: { $gte: 0 },
+                        tickets_available: { $gte: 0 }
+                    },
+                    { $inc: { [`tickets.${ticketIndex}.available`]: quantityToIncrement, tickets_available: quantityToIncrement } },
+                    { session }
+                );  // I changed here from gt to gte, because with gt if someone checkedout with all the tickets of a category it did not increment
 
-            // Commit the transaction
-            await session.commitTransaction();
-            session.endSession();
+                // Commit the transaction
+                await session.commitTransaction();
+                session.endSession();
 
-            }catch(e){
+            } catch (e) {
                 throw new Error('Server Error');
-            } 
-            
+            }
+
         } else {
             console.error("Availability is already at maximum");
             throw new Error('Availability is already at maximum');

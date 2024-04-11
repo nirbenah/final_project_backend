@@ -27,11 +27,6 @@ async function connectToDatabase() {
         console.error('Error connecting to database:', error);
     }
 }
-<<<<<<< Updated upstream
-//console.log('pass:', process.env.DBPASS);
-=======
-
->>>>>>> Stashed changes
 const port = process.env.PORT || 4000;
 const frontendURL = process.env.FRONTEND_URL || "http://localhost:5174";
 
