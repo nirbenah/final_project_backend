@@ -35,7 +35,7 @@ consumeMessage();
 const app = express();
 app.use(cookieParser());
 app.use(cors({
-    origin: [frontendURL, "http://localhost:5174"],
+    origin: [frontendURL],
     credentials: true
 }));
 
